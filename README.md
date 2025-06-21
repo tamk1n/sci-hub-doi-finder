@@ -1,6 +1,8 @@
 # DOI to Sci-Hub article Extension
 
-A simplest Chrome extension that finds Digital Object Identifier (DOI) links of journal articles, books, and datasets on a webpage and adds a direct link to open them on Sci-Hub.
+I have tried my best to make this extension as simple as it gets.
+
+A Chrome extension that finds Digital Object Identifier (DOI) links of journal articles, books, and datasets on a webpage and adds a direct link to open them on Sci-Hub. 
 
 ## Features
 
