@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Learning Chrome Extension",
+  "version": "1.0",
+  "description": "A simple Chrome extension for learning purposes",
+  "permissions": ["activeTab", "tabs", "scripting"],
+  "icons": {
+    "16": "icons/sci-hub-doi-finder-16.png",
+    "32": "icons/sci-hub-doi-finder-32.png",
+    "48": "icons/sci-hub-doi-finder-48.png",
+    "128": "icons/sci-hub-doi-finder.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Learning Extension"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/sci-hub.svg"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+} 
