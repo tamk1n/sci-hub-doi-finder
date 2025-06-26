@@ -37,9 +37,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  const loadingDiv = document.getElementById('loading-container');
+  const timerSpan = document.getElementById('timer');
+  let timerInterval;
+
+  function showLoading() {
+    loadingDiv.style.display = 'flex';
+    let seconds = 0;
+    timerSpan.textContent = seconds;
+    timerInterval = setInterval(() => {
+      seconds++;
+      timerSpan.textContent = seconds;
+    }, 1000);
+  }
+
+  function hideLoading() {
+    loadingDiv.style.display = 'none';
+    clearInterval(timerInterval);
+  }
+
   // Find DOIs button
   findDoisBtn.addEventListener('click', async () => {
     try {
+      showLoading();
       // Get the active tab
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       
@@ -52,13 +72,14 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Send message to content script and get response
       const response = await chrome.tabs.sendMessage(tab.id, { action: 'findDois' });
-      
+      hideLoading();  
       if (response.success) {
         showStatus(`Success! Added links for ${response.count} DOIs.`);
       } else {
         showStatus('Could not find any DOI links.', false);
       }
     } catch (error) {
+      hideLoading();
       console.error('Error:', error);
       showStatus('Error: ' + error.message, false);
     }

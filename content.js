@@ -11,13 +11,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: true, message: 'Content script is ready' });
         break;
       case 'findDois':
-        const count = findAndInjectSciHubLinks();
-        if (count > 0) {
-            sendResponse({ success: true, count: count });
-        } else {
-            sendResponse({ success: false, count: 0 });
-        }
-        break;
+        findAndInjectSciHubLinks((count) => {
+            if (count > 0) {
+                sendResponse({ success: true, count: count });
+            } else {
+                sendResponse({ success: false, count: 0 });
+            }
+        });
+        return true;
       default:
         console.log('Learning Extension: Unknown action:', request.action);
         sendResponse({ success: false, message: 'Unknown action' });
@@ -31,8 +32,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
+function getAvailableService(callback) {
+  chrome.runtime.sendMessage({ type: "CHECK_SCIHUB" }, (response) => {
+      if (response && response.available) {
+          callback(response.url);
+      } else {
+          callback(null);
+      }
+  });
+}
+
 // Function to find DOI links and inject Sci-Hub links
-function findAndInjectSciHubLinks() {
+function findAndInjectSciHubLinks(callback) {
     // Using a key icon to represent sci-hub links
     const sciHubKeyIcon = `
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; color: #ff0000;">
@@ -43,37 +54,43 @@ function findAndInjectSciHubLinks() {
     let count = 0;
     const doiLinks = document.querySelectorAll('a[href*="doi.org"]');
     
-    doiLinks.forEach(link => {
-        // Check if we've already added a link for this DOI to prevent duplicates
-        if (link.nextElementSibling && link.nextElementSibling.classList.contains('scihub-link')) {
-            count++;
-            return;
-        }
-        
-        const doiUrl = link.href;
-        const doiMatch = doiUrl.match(/doi\.org\/(.*)/);
-        
-        if (doiMatch && doiMatch[1]) {
-            const doi = doiMatch[1];
-            const sciHubUrl = `https://sci-hub.se/${doi}`;
-            
-            const sciHubLink = document.createElement('a');
-            sciHubLink.href = sciHubUrl;
-            sciHubLink.target = '_blank';
-            sciHubLink.title = 'Open this DOI on Sci-Hub';
-            sciHubLink.classList.add('scihub-link');
-            sciHubLink.style.marginLeft = '4px';
-            sciHubLink.style.marginRight = '4px';
-            sciHubLink.style.display = 'inline-flex';
-            sciHubLink.style.alignItems = 'center';
-            sciHubLink.innerHTML = sciHubKeyIcon;
+    getAvailableService((serviceUrl) => {
+      if (!serviceUrl) {
+          console.log('No Sci-Hub service available.');
+          callback(0);
+      }
 
-            link.insertAdjacentElement('afterend', sciHubLink);
-            count++;
-        }
-    });
+      doiLinks.forEach(link => {
+          if (link.nextElementSibling && link.nextElementSibling.classList.contains('scihub-link')) {
+              count++;
+              return;
+          }
 
-    
-    console.log(`Learning Extension: Added ${count} Sci-Hub links.`);
-    return count;
-} 
+          const doiUrl = link.href;
+          const doiMatch = doiUrl.match(/doi\.org\/(.*)/);
+
+          if (doiMatch && doiMatch[1]) {
+              const doi = doiMatch[1];
+              const sciHubUrl = `${serviceUrl}${doi}`;
+
+              const sciHubLink = document.createElement('a');
+              sciHubLink.href = sciHubUrl;
+              sciHubLink.target = '_blank';
+              sciHubLink.title = 'Open this DOI on Sci-Hub';
+              sciHubLink.classList.add('scihub-link');
+              sciHubLink.style.marginLeft = '4px';
+              sciHubLink.style.marginRight = '4px';
+              sciHubLink.style.display = 'inline-flex';
+              sciHubLink.style.alignItems = 'center';
+              sciHubLink.innerHTML = sciHubKeyIcon;
+
+              link.insertAdjacentElement('afterend', sciHubLink);
+              count++;
+          }
+      });
+      console.log(`Learning Extension: Added ${count} Sci-Hub links.`);
+      callback(count);
+  });
+
+  
+}
