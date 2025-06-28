@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Learning Chrome Extension",
-  "version": "1.0",
+  "version": "1.1.0",
   "description": "A simple Chrome extension for learning purposes",
   "permissions": ["activeTab", "tabs", "scripting"],
   "host_permissions": [
