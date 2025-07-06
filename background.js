@@ -32,4 +32,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         // Return true to indicate we will respond asynchronously
         return true;
     }
+    
+    if (request.type === "CHECK_PDF_AVAILABLE") {
+        (async () => {
+            try {
+                const response = await fetch(request.url);
+                const data = await response.text();
+                
+                // Check if the page contains an embed tag with type='application/pdf'
+                const hasPdfEmbed = data.includes('<embed') && data.includes('type="application/pdf"');
+                
+                sendResponse({ hasPdf: hasPdfEmbed });
+            } catch (error) {
+                console.error('Error checking PDF availability:', error);
+                sendResponse({ hasPdf: false, error: error.message });
+            }
+        })();
+        
+        // Return true to indicate we will respond asynchronously
+        return true;
+    }
 }); 
